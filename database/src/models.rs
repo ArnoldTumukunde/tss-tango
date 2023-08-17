@@ -1,4 +1,3 @@
-use ethers::types::{Bytes, H256, Address, U64, U256};
 use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 
@@ -19,25 +18,6 @@ pub struct EventsModel {
     pub transaction_log_index: Option<U256>,
     pub log_type: Option<String>,
     pub removed: Option<bool>,
-}
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ContractJson {
-    #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
-    pub id: Option<ObjectId>,
-    pub chain_endpoint: String,
-    pub contract_address: String,
-    pub event_type: String,
-}
-
-impl ContractJson {
-    pub fn new(contract_address: String, event_type: String, chain_endpoint: String) -> Self {
-        ContractJson {
-            chain_endpoint,
-            contract_address,
-            event_type,
-            id: None,
-        }
-    }
 }
 
 impl EventsModel {
