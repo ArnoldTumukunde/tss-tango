@@ -1,0 +1,54 @@
+[package]
+name = "tss-tango-node"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+name = "tss-tango-node"
+
+[workspace]
+members = [
+    'accounts',
+    'network',
+    'tss',
+    'messages',
+    'database',
+    'connector',
+]
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+connector = { path = "./connector/", package = "tango-connector"}
+accounts = { path = "./accounts/", package = "tango-accounts"}
+tss = { path = "./tss/", package = "tango-tss"}
+clap = { version = "4.3.21", features = ["derive"] }
+libp2p = "0.52.2"
+futures = "0.3.21"
+log = "0.4.0"
+env_logger = "0.10.0"
+tokio = { version = "1.18.2", features = ["full", "sync"] }
+serde = { version = "1.0.137", features = ["derive"] }
+serde_json = "1.0.81"
+mongodb = "2.3.0"
+reqwest = { version = "0.11", features = ["blocking", "json"] }
+rand = "0.8.0"
+tango_database = {path = "./database", package = "tango-database"}
+network = {path = "./network/", package = "tango-network"}
+messages = { path = "./messages/", package = "tango-messages"}
+indexmap = "=2.0.0"
+borsh = { version ="0.10.3", default-features = false }
+frost-dalek = { version = "0.2.3", git = "https://github.com/ArnoldTumukunde/frost-dalek.git"}
+subxt = { version = "0.31.0", git = "https://github.com/paritytech/subxt.git", branch = "master"}
+sp-core = { version = "7.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.40" }
+sp-keystore = { version = "0.13.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.40" }
+sp-keyring = { version = "7.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.40"}
+sc-keystore = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.40" }
+sc-service = { version = "0.10.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.40" }
+keystore = { version = "0.1.0", git = "https://github.com/ArnoldTumukunde/Keystore.git"}
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "full", "bit-vec"] }
+hex = "0.4.3"
+
