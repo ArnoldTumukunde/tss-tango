@@ -16,6 +16,7 @@ members = [
     'messages',
     'database',
     'connector',
+    'events',
 ]
 
 [package.metadata.docs.rs]
@@ -26,7 +27,7 @@ connector = { path = "./connector/", package = "tango-connector"}
 accounts = { path = "./accounts/", package = "tango-accounts"}
 tss = { path = "./tss/", package = "tango-tss"}
 clap = { version = "4.3.21", features = ["derive"] }
-libp2p = "0.52.2"
+libp2p = "0.44.0"
 futures = "0.3.21"
 log = "0.4.0"
 env_logger = "0.10.0"
@@ -51,4 +52,5 @@ sc-service = { version = "0.10.0-dev", git = "https://github.com/paritytech/subs
 keystore = { version = "0.1.0", git = "https://github.com/ArnoldTumukunde/Keystore.git"}
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "full", "bit-vec"] }
 hex = "0.4.3"
+
 

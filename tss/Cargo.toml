@@ -6,3 +6,28 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+tokio = { version = "1.18.2", features = ["full"] }
+serde = { version = "1.0.137", features = ["derive"] }
+serde_json = "1.0.81"
+log = "0.4.0"
+rand = "0.8.0"
+hex = "0.4.2"
+thiserror = "1.0.32"
+futures = "0.3.25"
+tracing-subscriber = "0.3.11"
+borsh = { version ="0.10.3", default-features = false }
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "full", "bit-vec"] }
+frost-dalek = { version = "0.2.3", git = "https://github.com/ArnoldTumukunde/frost-dalek.git"}
+subxt = { version = "0.31.0", git = "https://github.com/paritytech/subxt.git", branch = "master"}
+curve25519-dalek = { version = "3.2.0", git = "https://github.com/ArnoldTumukunde/curve25519-dalek.git"}
+sc-keystore = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.40" }
+sp-core = { version = "7.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.40" }
+sc-service = { version = "0.10.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.40" }
+sp-keystore = { version = "0.13.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.40" }
+sp-keyring = { version = "7.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.40"}
+sp-io = { version = "7.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.40" }
+keystore = { version = "0.1.0", git = "https://github.com/ArnoldTumukunde/Keystore.git"}
+tango_database = {path = "../database", package = "tango-database"}
+accounts = {path = "../accounts", package = "tango-accounts"}
+events= {path="../events/", package = "tango-events"}
+sc-cli = { version = "0.10.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.40" }
