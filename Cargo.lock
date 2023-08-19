@@ -10575,7 +10575,7 @@ name = "tss-tango-node"
 version = "0.1.0"
 dependencies = [
  "borsh",
- "clap 4.3.22",
+ "clap 3.2.25",
  "env_logger",
  "frost-dalek",
  "futures",
