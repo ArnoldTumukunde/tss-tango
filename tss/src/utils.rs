@@ -1,7 +1,6 @@
 use std::collections::HashMap;
-
 use borsh::BorshSerialize;
-use events::event_struct::{Event, EventType};
+use events::events::{Event, EventType};
 use frost_dalek::{
     keygen::{Coefficients, RoundOne, SecretShare},
     DistributedKeyGeneration, Parameters, Participant,

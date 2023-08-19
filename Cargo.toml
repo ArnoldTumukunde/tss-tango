@@ -27,7 +27,7 @@ connector = { path = "./connector/", package = "tango-connector"}
 accounts = { path = "./accounts/", package = "tango-accounts"}
 tss = { path = "./tss/", package = "tango-tss"}
 clap = { version = "4.3.21", features = ["derive"] }
-libp2p = "0.44.0"
+libp2p = "0.50.1"
 futures = "0.3.21"
 log = "0.4.0"
 env_logger = "0.10.0"
@@ -41,7 +41,7 @@ tango_database = {path = "./database", package = "tango-database"}
 network = {path = "./network/", package = "tango-network"}
 messages = { path = "./messages/", package = "tango-messages"}
 indexmap = "=2.0.0"
-borsh = { version ="0.10.3", default-features = false }
+borsh = { version ="0.9", default-features = false }
 frost-dalek = { version = "0.2.3", git = "https://github.com/ArnoldTumukunde/frost-dalek.git"}
 subxt = { version = "0.31.0", git = "https://github.com/paritytech/subxt.git", branch = "master"}
 sp-core = { version = "7.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.40" }

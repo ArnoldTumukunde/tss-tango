@@ -4,7 +4,7 @@ version = "0.0.1"
 authors = ["Dev <tumukundearnold@gmail.com>"]
 edition = "2021"
 license = "Apache-2.0"
-homepage = "https://www.analog.one/"
+homepage = "https://www.tumukunde.xyz/"
 repository = "https://github.com/ArnoldTumukunde/tss-tango/"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

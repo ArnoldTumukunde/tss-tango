@@ -674,7 +674,7 @@ impl TssService {
     pub async fn handler_verify_threshold_signature(self: &mut Self, data: &Vec<u8>) {
         if self.tss_local_state.tss_process_state >= TSSLocalStateType::StateFinished {
             if let Ok(threshold_signature) = VerifyThresholdSignatureReq::try_from_slice(data) {
-                if let Some(_) = self
+                if let Some(msg) = self
                     .tss_local_state
                     .msg_pool
                     .get(&threshold_signature.msg_hash)
@@ -691,6 +691,41 @@ impl TssService {
                         .verify(&finished_state.0, &threshold_signature.msg_hash.into())
                     {
                         Ok(_) => {
+                            let msg = match String::from_utf8(msg.clone()) {
+                                Ok(msg) => msg,
+                                Err(e) => {
+                                    log::error!(
+                                        "TSS::error in converting message to string, {}",
+                                        e
+                                    );
+                                    return;
+                                }
+                            };
+
+                            //sign message with account
+                            let keytype = match self.tss_local_state.key_type.clone() {
+                                Some(keytype) => keytype,
+                                None => return,
+                            };
+
+                            match sign_data(
+                                self.account.clone(),
+                                self.connection.clone(),
+                                msg,
+                                keytype,
+                                self.tss_local_state.keystore.clone().unwrap(),
+                                //self.timechain_client.clone(),
+                            )
+                            .await
+                            {
+                                Ok(_) => {
+                                    log::info!("message signed and stored successfully");
+                                }
+                                Err(e) => {
+                                    log::error!("error in signing message {:?}", e);
+                                }
+                            };
+
                             //remove event from msg_pool
                             self.tss_local_state
                                 .msg_pool
@@ -730,7 +765,7 @@ impl TssService {
     }
 
     //Aggregator node signs the event and store it into local state
-    pub async fn aggregator_event_sign(self: &mut Self, msg_hash: [u8; 64]) {
+    pub fn aggregator_event_sign(self: &mut Self, msg_hash: [u8; 64]) {
         let mut my_commitment = match self.tss_local_state.local_commitment_share.clone() {
             Some(commitment) => commitment,
             None => {
@@ -747,7 +782,7 @@ impl TssService {
             }
         };
 
-        if let Some(msg) = self.tss_local_state.msg_pool.get(&msg_hash) {
+        if let Some(_) = self.tss_local_state.msg_pool.get(&msg_hash) {
             //making partial signature here
             let partial_signature = match final_state.1.sign(
                 &msg_hash,
@@ -776,36 +811,6 @@ impl TssService {
                     .others_partial_signature
                     .insert(msg_hash, participant_list);
             }
-            let message = match String::from_utf8(msg.clone()) {
-                Ok(msg) => msg,
-                Err(e) => {
-                    log::error!("TSS::error in converting message to string, {}", e);
-                    return;
-                }
-            };
-
-            //sign message with account
-            let keytype = match self.tss_local_state.key_type.clone() {
-                Some(keytype) => keytype,
-                None => return,
-            };
-
-            match sign_data(
-                self.account.clone(),
-                message,
-                keytype,
-                self.tss_local_state.keystore.clone().unwrap(),
-                self.config.clone(),
-            )
-            .await
-            {
-                Ok(_) => {
-                    log::info!("message signed and stored successfully");
-                }
-                Err(e) => {
-                    log::error!("error in signing message {:?}", e);
-                }
-            };
         } else {
             log::error!("TSS::Message not found in pool");
         }

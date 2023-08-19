@@ -6,3 +6,18 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+tokio = {version= "1.18.2", features=["full"]}
+log = "0.4.0"
+ethers = "1.0.0"
+eyre = "0.6.8"
+ethers-providers = "1.0.0"
+serde_json = "1.0.83"
+serde = { version = "1.0.137", features = ["derive"] }
+database = {package = "tango-database", path = "../database"}
+reqwest = { version = "0.11", features = ["blocking", "json"] }
+chrono = { version = "0.4.19", features = ["serde"] }
+futures = "0.3.13"
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "full", "bit-vec"] }
+hex = "0.4.3"
+subxt = { version = "0.31.0", git = "https://github.com/paritytech/subxt.git", branch = "master"}
+web3 = "*"

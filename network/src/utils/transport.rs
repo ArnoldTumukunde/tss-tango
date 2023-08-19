@@ -10,8 +10,8 @@ use libp2p::{PeerId, Transport};
 use std::io::{self, Error, ErrorKind};
 use std::time::Duration;
 
-use libp2p::dns::TokioDnsConfig;
-use libp2p::tcp::TokioTcpConfig;
+use libp2p::dns::GenDnsConfig;
+use libp2p::tcp;
 
 //https://github.com/rs-ipfs/rust-ipfs/blob/master/src/p2p/transport.rs
 
@@ -25,7 +25,7 @@ pub fn build_transport(keypair: identity::Keypair) -> io::Result<TTransport> {
         .unwrap();
     let noise_config = NoiseConfig::xx(xx_keypair).into_authenticated();
 
-    Ok(TokioDnsConfig::system(TokioTcpConfig::new())?
+    Ok(tcp::tokio::Transport::default()
         .upgrade(Version::V1)
         .authenticate(noise_config)
         .multiplex(SelectUpgrade::new(

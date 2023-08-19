@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-libp2p = {version= "0.44.0", features = ["tcp-tokio", "dns-tokio"]}
+libp2p = { version= "0.50.1", features = ["tokio", "tcp", "dns", "gossipsub", "mdns", "identify", "autonat", "macros"]}
 tokio = { version = "1.18.2", features = ["full"] }
 serde_json = "1.0.81"
 log = "0.4.0"

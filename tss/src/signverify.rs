@@ -7,9 +7,7 @@ use sp_core::{Pair, Public};
 use sp_keystore::SyncCryptoStore;
 use std::collections::HashMap;
 use std::{convert::TryFrom, sync::Arc};
-use tango_database::models::EventsModel;
-use tango_database::MongoRepo;
-use tokio::sync::Mutex;
+use tango_database::{models::EventsModel, MongoRepo};
 
 pub async fn sign_data(
     acc: Account,
@@ -17,7 +15,7 @@ pub async fn sign_data(
     msg: String,
     key_type: KeyTypeId,
     keystore: Arc<dyn SyncCryptoStore>,
-) -> Result<Signature, Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<Signature, Box<dyn std::error::Error>> {
     let sig_data = match SyncCryptoStore::sign_with(
         &*keystore,
         key_type,
@@ -77,19 +75,18 @@ pub async fn sign_data(
             return Err(e.into());
         }
     };
-
     Ok(signature)
 }
 
 pub async fn store_data(
     data: HashMap<String, Value>,
     connector: MongoRepo,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<(), Box<dyn std::error::Error>> {
     //store event data in db
     let data = serde_json::to_value(data).unwrap();
     let _ = tokio::spawn(async move {
-        if let Err(_) =
-            MongoRepo::insert_event(&connector, EventsModel { id: None, data }).await
+        if let Err(_) =      
+            tango_database::MongoRepo::insert_event(&connector, EventsModel { id: None, data }).await
         {
             log::error!("Error storing data");
         }
@@ -147,15 +144,9 @@ mod tests {
         let acc = Account::new("tango", key_type, keystore.clone());
         let connector = get_connection("mongodb://localhost:27017".to_string()).await;
         let msg = r#"{"address":"0x0000000000000000000000000000000000000000","topics":["0x0000000000000000000000000000000000000000000000000000000000000000"],"data":"0x0000000000000000000000000000000000000000000000000000000000000000","block_hash":null,"block_number":null,"transaction_hash":null,"transaction_index":null,"log_index":null,"transaction_log_index":null,"log_type":null,"removed":null}"#;
-        let sig = sign_data(
-            acc.clone(),
-            connector.clone(),
-            msg.to_string(),
-            key_type,
-            keystore.clone(),
-        )
-        .await
-        .unwrap();
+        let sig = sign_data(acc.clone(), connector, msg.to_string(), key_type, keystore)
+            .await
+            .unwrap();
         match verify_data(sig, msg.to_string(), acc.accounts).await {
             Ok(_d) => assert!(true),
             Err(_e) => assert!(false),

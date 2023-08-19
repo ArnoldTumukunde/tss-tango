@@ -42,7 +42,7 @@ pub async fn run(
         listening_port.parse::<i32>().unwrap() <= 65535,
         "Invalid port provided"
     );
-
+    let mut is_bootstrapped = false;
     //node keypair
     let peer_id = node_identity.0;
     let id_keys = node_identity.1;
@@ -58,7 +58,6 @@ pub async fn run(
             kademlia: build_kademlia(peer_id.clone()),
             identify: build_identify(id_keys.public().clone()),
             ping: build_ping(),
-            is_bootstrapped: false,
         };
 
         //composing transport, protocol and peer id into swam manager and running in tokio env
@@ -136,7 +135,7 @@ pub async fn run(
     if let Err(e) = swarm.behaviour_mut().kademlia.bootstrap() {
         log::warn!("Failed to bootstrap node with error {}", e);
     } else {
-        swarm.behaviour_mut().is_bootstrapped = true;
+        is_bootstrapped = true;
         log::info!("Bootstrap Done");
     }
 
@@ -186,9 +185,9 @@ pub async fn run(
                             log::info!("MDNS: inserted node into kademlia: {}", peer_id);
 
                             //bootstrapping if not already done
-                            if !swarm.behaviour().is_bootstrapped {
+                            if !is_bootstrapped {
                                 if swarm.behaviour_mut().kademlia.bootstrap().is_ok(){
-                                    swarm.behaviour_mut().is_bootstrapped = true;
+                                    is_bootstrapped = true;
                                     log::info!("MDNS: Kademlia bootstrapped successfully");
                                 }
                             }
@@ -243,7 +242,7 @@ pub async fn run(
 
 pub fn kad_event_handler(event: KademliaEvent, swarm: &mut Swarm<LocalNetworkBehaviour>) {
     match event {
-        KademliaEvent::OutboundQueryCompleted { result, .. } => match result {
+        KademliaEvent::OutboundQueryProgressed { result, .. } => match result {
             QueryResult::GetProviders(Ok(_ok)) => {
                 log::info!("Kademlia: GetProviders successful");
             }

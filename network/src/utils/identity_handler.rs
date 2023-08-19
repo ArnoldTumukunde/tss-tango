@@ -116,7 +116,7 @@ fn get_keypair_path() -> Option<String> {
     let default_proj_path = dirs::home_dir();
     if let Some(path) = default_proj_path {
         let my_home = path.into_os_string().into_string().unwrap();
-        let identity_folder = my_home + "/analog/identity/";
+        let identity_folder = my_home + "/tango/identity/";
         if let Err(e) = std::fs::create_dir_all(PathBuf::from(identity_folder.clone())) {
             log::error!("Unable to create identity file in home {}", e);
         }

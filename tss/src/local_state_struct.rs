@@ -70,7 +70,7 @@ impl TSSLocalStateData {
         TSSLocalStateData {
             is_node_collector: false,
             is_node_aggregator: false,
-            context: *b"TANGO-EVENT-DATA-SIGNING",
+            context: *b"TANGO-EVENTS-DATA-SIGNING",
             tss_process_state: TSSLocalStateType::Empty,
             tss_params: Parameters {
                 n: DEFUALT_TSS_TOTAL_NODES,
