@@ -42,7 +42,7 @@ async fn get_connection(db_url: String) -> MongoRepo {
     collections.push("token_swap");
     collections.push("swap_events");
     collections.push("tokens");
-    let connector = MongoRepo::init(&db_url, "analog_db", collections).await;
+    let connector = MongoRepo::init(&db_url, "tango_db", collections).await;
 
     connector
 }

@@ -44,7 +44,7 @@ pub async fn build_mdns() -> Mdns {
 pub fn build_kademlia(peer_id: PeerId) -> Kademlia<MemoryStore> {
     let store = MemoryStore::new(peer_id);
     let mut kad_config = KademliaConfig::default();
-    kad_config.set_protocol_name("/analog/kad/1.0.0".as_bytes());
+    kad_config.set_protocol_name("/tango/kad/1.0.0".as_bytes());
     kad_config.set_query_timeout(Duration::from_secs(300));
     kad_config.set_record_filtering(KademliaStoreInserts::FilterBoth);
     // set disjoint_query_paths to true. Ref: https://discuss.libp2p.io/t/s-kademlia-lookups-over-disjoint-paths-in-rust-libp2p/571
@@ -62,7 +62,7 @@ pub fn build_ping() -> Ping {
 ///builds kademlia behaviour to be use in swarm
 pub fn build_identify(local_public_key: PublicKey) -> Identify {
     Identify::new(IdentifyConfig::new(
-        "/analog/id/1.0.0".into(),
+        "/tango/id/1.0.0".into(),
         local_public_key,
     ))
 }
