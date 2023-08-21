@@ -147,7 +147,6 @@ async fn main() {
         });
     } else if blockchain == selected_chain.ethereum {
         log::info!("Etherum chain connected.");
-        // let connector_json = MongoRepo::get_contract_json(&connector).await.unwrap();
         log::info!("Data fetched successfully from the contract database.",);
         /////////////////////// event data fetch  removed
         //

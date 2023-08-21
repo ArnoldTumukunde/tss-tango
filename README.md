@@ -43,3 +43,33 @@ development plan:
 - [] ci works, integration test automatically run. node number and threshold configurable (3 nodes to 10 nodes)
 
 
+## How to run the nodes
+
+* Make sure you have hardhat setup
+
+Try running some of the following tasks:
+
+```shell
+npx hardhat node
+npx hardhat compile
+npx hardhat run scripts/deploy.ts --network localhost
+npx hardhat run scripts/getAmount.ts  --network localhost
+```
+
+* Navigate to the root folder and start your nodes
+
+```shell
+target/release/tango-node --db-url mongodb://localhost:27017/admin --blockchain=ethereum
+```
+
+open another terminal
+
+```shell
+target/release/tango-node --new-node=true
+```
+
+Finally run the last node
+
+```shell
+target/release/tango-node --new-node=true
+```

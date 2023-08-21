@@ -25,7 +25,7 @@ pub struct Args {
     pub new_node: bool,
 
     /// db url
-    #[clap(short, long, default_value = "mongodb://localhost:27017")]
+    #[clap(short, long, default_value = "mongodb://localhost:27017/admin")]
     pub db_url: String,
 
     //account password
