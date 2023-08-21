@@ -58,6 +58,8 @@ npx hardhat run scripts/getAmount.ts  --network localhost
 
 * Navigate to the root folder and start your nodes
 
+Currently only 2 chains are supported ``` polkadot ``` and ``` ethereum ```
+
 ```shell
 target/release/tango-node --db-url mongodb://localhost:27017/admin --blockchain=ethereum
 ```
