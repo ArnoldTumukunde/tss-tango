@@ -1,10 +1,10 @@
 use crate::{
-    signverify::sign_data,
-    tss_event_model::{
+    local_state_struct::{
         FilterAndPublishParticipant, OthersCommitmentShares, PartialMessageSign,
         ReceivePartialSignatureReq, TSSLocalStateType, VerifyThresholdSignatureReq,
     },
-    tss_event_model::{PublishPeerIDCall, ReceiveParamsWithPeerCall, ResetTSSCall, TSSEventType},
+    signverify::sign_data,
+    tss_event_model::{PublishPeerIDCall, ReceiveParamsWithPeerCall, TSSEventType, ResetTSSCall},
     tss_service::TssService,
     utils::{
         get_participant_index, get_publish_peer_id_msg, make_gossip_tss_data,
@@ -20,7 +20,7 @@ use rand::rngs::OsRng;
 use std::collections::HashMap;
 
 impl TssService {
-    //will be run by non collector nodes
+    // will be run by non collector nodes
     pub async fn handler_receive_params(self: &mut Self, data: &Vec<u8>) {
         let local_peer_id = self.tss_local_state.local_peer_id.clone().unwrap();
 
@@ -67,56 +67,53 @@ impl TssService {
         let local_peer_id = self.tss_local_state.local_peer_id.clone().unwrap();
 
         //receive index and update state of node
-        if self.tss_local_state.is_node_collector {
-            if self.tss_local_state.tss_process_state == TSSLocalStateType::Empty {
-                if let Ok(peer_id_call) = PublishPeerIDCall::try_from_slice(data) {
-                    let peer_id = peer_id_call.peer_id;
+        if self.tss_local_state.is_node_collector
+            && self.tss_local_state.tss_process_state == TSSLocalStateType::Empty
+        {
+            if let Ok(peer_id_call) = PublishPeerIDCall::try_from_slice(data) {
+                let peer_id = peer_id_call.peer_id;
 
-                    if !self.tss_local_state.others_peer_id.contains(&peer_id) {
-                        self.tss_local_state.others_peer_id.push(peer_id);
+                if !self.tss_local_state.others_peer_id.contains(&peer_id) {
+                    self.tss_local_state.others_peer_id.push(peer_id);
 
-                        let params: Parameters = self.tss_local_state.tss_params;
+                    let params: Parameters = self.tss_local_state.tss_params;
 
-                        //check if we have min number of nodes
-                        if self.tss_local_state.others_peer_id.len() >= (params.n as usize - 1) {
-                            //change connector node state to received peers
-                            self.tss_local_state.tss_process_state =
-                                TSSLocalStateType::ReceivedPeers;
+                    //check if we have min number of nodes
+                    if self.tss_local_state.others_peer_id.len() >= (params.n as usize - 1) {
+                        //change connector node state to received peers
+                        self.tss_local_state.tss_process_state = TSSLocalStateType::ReceivedPeers;
 
-                            let mut other_peer_list = self.tss_local_state.others_peer_id.clone();
-                            let index =
-                                get_participant_index(local_peer_id.clone(), &other_peer_list);
-                            self.tss_local_state.local_index = Some(index);
+                        let mut other_peer_list = self.tss_local_state.others_peer_id.clone();
+                        let index = get_participant_index(local_peer_id.clone(), &other_peer_list);
+                        self.tss_local_state.local_index = Some(index);
 
-                            //collector node making participant and publishing
-                            let participant = make_participant(params, index);
-                            self.tss_local_state.local_participant = Some(participant.clone());
+                        //collector node making participant and publishing
+                        let participant = make_participant(params, index);
+                        self.tss_local_state.local_participant = Some(participant.clone());
 
-                            log::info!("TSS::this nodes participant index {}", index);
+                        log::info!("TSS::this nodes participant index {}", index);
 
-                            //preparing publish data
-                            other_peer_list
-                                .push(self.tss_local_state.local_peer_id.clone().unwrap());
-                            let data = FilterAndPublishParticipant {
-                                total_peer_list: other_peer_list,
-                                col_participant: participant.0,
-                            };
+                        //preparing publish data
+                        other_peer_list.push(self.tss_local_state.local_peer_id.clone().unwrap());
+                        let data = FilterAndPublishParticipant {
+                            total_peer_list: other_peer_list,
+                            col_participant: participant.0,
+                        };
 
-                            //publish to network
-                            self.publish_to_network::<FilterAndPublishParticipant>(
-                                local_peer_id,
-                                data,
-                                TSSEventType::ReceivePeersWithColParticipant,
-                            )
-                            .await;
-                        }
+                        //publish to network
+                        self.publish_to_network::<FilterAndPublishParticipant>(
+                            local_peer_id,
+                            data,
+                            TSSEventType::ReceivePeersWithColParticipant,
+                        )
+                        .await;
                     }
-                } else {
-                    log::error!("TSS::PeerID already exists in local state list");
                 }
             } else {
-                log::error!("TSS::Received peer id for index but node is not in empty state");
+                log::error!("TSS::PeerID already exists in local state list");
             }
+        } else {
+            log::error!("TSS::Received peer id for index but node is not in empty state");
         }
     }
 
@@ -165,7 +162,6 @@ impl TssService {
         }
     }
 
-    //receive participant and publish to network secret share to network when all participants are received
     pub async fn handler_receive_participant(self: &mut Self, data: &Vec<u8>) {
         let local_peer_id = self.tss_local_state.local_peer_id.clone().unwrap();
         //receive participants and update state of node
@@ -246,7 +242,6 @@ impl TssService {
         }
     }
 
-    //receives secret share form all other nodes which are participating in the tss
     pub async fn handler_receive_secret_share(self: &mut Self, data: &Vec<u8>) {
         let local_peer_id = self.tss_local_state.local_peer_id.clone().unwrap();
         //receive secret shares and update state of node
@@ -401,7 +396,6 @@ impl TssService {
         }
     }
 
-    //This call is received by aggregators to make list of commitment of participants
     pub async fn handler_receive_commitment(self: &mut Self, data: &Vec<u8>) {
         //receive commitments and update state of node
         if self.tss_local_state.is_node_aggregator {
@@ -438,16 +432,11 @@ impl TssService {
             } else {
                 log::error!("TSS::Received commitment but node not in correct state");
             }
-        } else {
-            log::info!(
-                "TSS::current tss state for receiving commitment is: {:?} with peer id: {:?}",
-                self.tss_local_state.tss_process_state,
-                self.tss_local_state.local_peer_id
-            );
+        }else{
+            log::info!("TSS::current tss state for receiving commitment is: {:?} with peer id: {:?}", self.tss_local_state.tss_process_state, self.tss_local_state.local_peer_id);
         }
     }
 
-    //This call is received by participant to generate its partial signature
     pub async fn handler_partial_signature_generate_req(self: &mut Self, data: &Vec<u8>) {
         let local_peer_id = self.tss_local_state.local_peer_id.clone().unwrap();
 
@@ -498,10 +487,7 @@ impl TssService {
                     )
                     .await;
                 } else {
-                    log::warn!(
-                        "TSS::data received for signing but not in local pool: {:?}",
-                        msg_req.msg_hash
-                    );
+                    log::error!("TSS::data received for signing but not in local pool");
                     self.tss_local_state
                         .msgs_signature_pending
                         .insert(msg_req.msg_hash, msg_req.signers);
@@ -514,7 +500,6 @@ impl TssService {
         }
     }
 
-    //this call is received by aggregator to make the threshold signature
     pub async fn handler_partial_signature_received(self: &mut Self, data: &Vec<u8>) {
         let local_peer_id = self.tss_local_state.local_peer_id.clone().unwrap();
 
@@ -546,7 +531,7 @@ impl TssService {
                             .get(&msg_req.msg_hash)
                             .unwrap()
                             .len()
-                            == self.tss_local_state.current_signers.len()
+                            >= params.t as usize
                         {
                             let context = self.tss_local_state.context.clone();
                             let finished_state =
@@ -574,17 +559,6 @@ impl TssService {
                                 );
                             }
 
-                            aggregator.include_signer(
-                                self.tss_local_state.local_index.clone().unwrap(),
-                                self.tss_local_state
-                                    .local_commitment_share
-                                    .clone()
-                                    .unwrap()
-                                    .0
-                                    .commitments[0],
-                                self.tss_local_state.local_public_key.clone().unwrap(),
-                            );
-
                             //include partial signature
                             for item in self
                                 .tss_local_state
@@ -600,10 +574,10 @@ impl TssService {
                             let aggregator_finalized = match aggregator.finalize() {
                                 Ok(aggregator_finalized) => aggregator_finalized,
                                 Err(e) => {
-                                    for (key, value) in e.into_iter() {
-                                        //These issues are from the aggregator side and not the signer side
-                                        log::error!("TSS::error occured while finalizing aggregator from index {:?} because of {:?}", key, value);
-                                    }
+                                    log::error!(
+                                        "TSS::error occured while finalizing aggregator: {:?}",
+                                        e
+                                    );
                                     return;
                                 }
                             };
@@ -612,42 +586,26 @@ impl TssService {
                             let threshold_signature = match aggregator_finalized.aggregate() {
                                 Ok(threshold_signature) => threshold_signature,
                                 Err(e) => {
-                                    for (key, value) in e.into_iter() {
-                                        //can also send the indices of participants to timechain to keep track of that
-                                        log::error!(
-                                            "TSS::Participant {} misbehaved because {}",
-                                            key,
-                                            value
-                                        );
-                                    }
+                                    log::error!(
+                                        "TSS::error occured while aggregating aggregator: {:?}",
+                                        e
+                                    );
                                     return;
                                 }
                             };
 
-                            //check for validity of event
-                            match threshold_signature
-                                .verify(&finished_state.0, &msg_req.msg_hash.into())
-                            {
-                                Ok(_) => {
-                                    log::info!("TSS::Signature is valid sending to network");
+                            let gossip_data = VerifyThresholdSignatureReq {
+                                // msg: msg_req.msg,
+                                msg_hash: msg_req.msg_hash.into(),
+                                threshold_sign: threshold_signature,
+                            };
 
-                                    let gossip_data = VerifyThresholdSignatureReq {
-                                        // msg: msg_req.msg,
-                                        msg_hash: msg_req.msg_hash.into(),
-                                        threshold_sign: threshold_signature,
-                                    };
-
-                                    self.publish_to_network(
-                                        local_peer_id,
-                                        gossip_data,
-                                        TSSEventType::VerifyThresholdSignature,
-                                    )
-                                    .await;
-                                }
-                                Err(_) => {
-                                    log::error!("TSS::Signature computed is invalid");
-                                }
-                            }
+                            self.publish_to_network(
+                                local_peer_id,
+                                gossip_data,
+                                TSSEventType::VerifyThresholdSignature,
+                            )
+                            .await;
 
                             //reset partial signature
                             self.tss_local_state
@@ -670,7 +628,6 @@ impl TssService {
         }
     }
 
-    //This call is received by participant to verify the threshold signature
     pub async fn handler_verify_threshold_signature(self: &mut Self, data: &Vec<u8>) {
         if self.tss_local_state.tss_process_state >= TSSLocalStateType::StateFinished {
             if let Ok(threshold_signature) = VerifyThresholdSignatureReq::try_from_slice(data) {
@@ -686,57 +643,51 @@ impl TssService {
                             return;
                         }
                     };
-                    match threshold_signature
+                    if let Ok(_) = threshold_signature
                         .threshold_sign
                         .verify(&finished_state.0, &threshold_signature.msg_hash.into())
                     {
-                        Ok(_) => {
-                            let msg = match String::from_utf8(msg.clone()) {
-                                Ok(msg) => msg,
-                                Err(e) => {
-                                    log::error!(
-                                        "TSS::error in converting message to string, {}",
-                                        e
-                                    );
-                                    return;
-                                }
-                            };
+                        let msg = match String::from_utf8(msg.clone()) {
+                            Ok(msg) => msg,
+                            Err(e) => {
+                                log::error!("TSS::error in converting message to string, {}", e);
+                                return;
+                            }
+                        };
 
-                            //sign message with account
-                            let keytype = match self.tss_local_state.key_type.clone() {
-                                Some(keytype) => keytype,
-                                None => return,
-                            };
+                        //sign message with account
+                        let keytype = match self.tss_local_state.key_type.clone() {
+                            Some(keytype) => keytype,
+                            None => return,
+                        };
 
-                            match sign_data(
-                                self.account.clone(),
-                                self.connection.clone(),
-                                msg,
-                                keytype,
-                                self.tss_local_state.keystore.clone().unwrap(),
-                            )
-                            .await
-                            {
-                                Ok(_) => {
-                                    log::info!("message signed and stored successfully");
-                                }
-                                Err(e) => {
-                                    log::error!("error in signing message {:?}", e);
-                                }
-                            };
+                        match sign_data(
+                            self.account.clone(),
+                            self.connection.clone(),
+                            msg,
+                            keytype,
+                            self.tss_local_state.keystore.clone().unwrap(),
+                        )
+                        .await
+                        {
+                            Ok(_) => {
+                                log::info!("message signed and stored successfully");
+                            }
+                            Err(e) => {
+                                log::error!("error in signing message {:?}", e);
+                            }
+                        };
 
-                            //remove event from msg_pool
-                            self.tss_local_state
-                                .msg_pool
-                                .remove(&threshold_signature.msg_hash);
-                            log::info!(
-                                "length of msg_pool {:?}",
-                                self.tss_local_state.msg_pool.len()
-                            );
-                        }
-                        Err(e) => {
-                            log::error!("TSS::Could not verify signature: {:?}", e);
-                        }
+                        //remove event from msg_pool
+                        self.tss_local_state
+                            .msg_pool
+                            .remove(&threshold_signature.msg_hash);
+                        log::info!(
+                            "length of msg_pool {:?}",
+                            self.tss_local_state.msg_pool.len()
+                        );
+                    } else {
+                        log::error!("TSS::Could not verify signature");
                     }
                 } else {
                     log::error!("TSS::Could not find message in local pool for verification");
@@ -752,70 +703,16 @@ impl TssService {
         }
     }
 
-    //This call resets the tss state data to empty/initial state
     pub async fn handler_reset_tss_state(self: &mut Self, data: &Vec<u8>) {
         //reset TSS State
-        if let Ok(data) = ResetTSSCall::try_from_slice(data) {
-            log::error!("TSS::Resetting TSS due to reason {} ", data.reason);
+        if let Ok(reason) = ResetTSSCall::try_from_slice(data) {
+            log::error!("TSS::Resetting TSS due to reason {} ", reason.reason);
         } else {
             log::error!("TSS::unable to get reset reason");
         }
         self.tss_local_state.reset();
     }
 
-    //Aggregator node signs the event and store it into local state
-    pub fn aggregator_event_sign(self: &mut Self, msg_hash: [u8; 64]) {
-        let mut my_commitment = match self.tss_local_state.local_commitment_share.clone() {
-            Some(commitment) => commitment,
-            None => {
-                log::error!("TSS::Unable to get local commitment share from local state");
-                return;
-            }
-        };
-
-        let final_state = match self.tss_local_state.local_finished_state.clone() {
-            Some(final_state) => final_state,
-            None => {
-                log::error!("TSS::Unable to get local finished state from local state");
-                return;
-            }
-        };
-
-        if let Some(_) = self.tss_local_state.msg_pool.get(&msg_hash) {
-            //making partial signature here
-            let partial_signature = match final_state.1.sign(
-                &msg_hash,
-                &final_state.0,
-                &mut my_commitment.1,
-                0,
-                &self.tss_local_state.current_signers,
-            ) {
-                Ok(partial_signature) => partial_signature,
-                Err(e) => {
-                    log::error!("TSS::error occured while signing: {:?}", e);
-                    return;
-                }
-            };
-
-            if let Some(hashmap) = self
-                .tss_local_state
-                .others_partial_signature
-                .get_mut(&msg_hash)
-            {
-                hashmap.push(partial_signature);
-            } else {
-                let mut participant_list = Vec::new();
-                participant_list.push(partial_signature);
-                self.tss_local_state
-                    .others_partial_signature
-                    .insert(msg_hash, participant_list);
-            }
-        } else {
-            log::error!("TSS::Message not found in pool");
-        }
-    }
-
-    //Publishing the data to the network
     pub async fn publish_to_network<T>(
         self: &Self,
         peer_id: String,

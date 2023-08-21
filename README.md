@@ -34,8 +34,6 @@ cargo run --example tss_bench_n3t2_1000
 ```
 
 ### phase one
-based on clarified requirements, make a runnable system. the design as [diagram](https://www.figma.com/file/IGAVjmZfMwJqVt0XBiy9es/Untitled?node-id=57%3A286)
-
 development plan:
 - [] connector can get events, stored in db with single signature. test passed with local ethereum
 - [] tss works, tango node can exchange key and sign event

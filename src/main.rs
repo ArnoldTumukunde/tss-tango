@@ -53,7 +53,7 @@ async fn main() {
     // log
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
     let config_dir = env::current_dir().unwrap();
-    log::info!("Tesseract node start up ");
+    log::info!("tango node start up ");
 
     //Declare channels and variables
     //Channels

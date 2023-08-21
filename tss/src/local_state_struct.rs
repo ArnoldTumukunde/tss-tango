@@ -1,19 +1,66 @@
+use borsh::{BorshDeserialize, BorshSerialize};
 use frost_dalek::{
     keygen::{Coefficients, RoundOne, RoundTwo, SecretShare},
     precomputation::{PublicCommitmentShareList, SecretCommitmentShareList},
-    signature::{PartialThresholdSignature, SecretKey, Signer},
+    signature::{PartialThresholdSignature, SecretKey, Signer, ThresholdSignature},
     DistributedKeyGeneration, GroupKey, IndividualPublicKey, Parameters, Participant,
 };
+use keystore::commands::KeyTypeId;
 use sp_keystore::SyncCryptoStore;
 use std::sync::Arc;
 use std::{collections::HashMap, fmt};
 
-use crate::{
-    tss_event_model::{OthersCommitmentShares, TSSLocalStateType},
-    DEFUALT_TSS_THRESHOLD, DEFUALT_TSS_TOTAL_NODES,
-};
-use sp_core::crypto::KeyTypeId;
+use crate::{DEFUALT_TSS_THRESHOLD, DEFUALT_TSS_TOTAL_NODES};
 
+#[derive(Debug, BorshSerialize, BorshDeserialize, Clone, PartialEq)]
+pub struct OthersCommitmentShares {
+    pub public_key: IndividualPublicKey,
+    pub public_commitment_share_list: PublicCommitmentShareList,
+}
+
+#[derive(Debug, BorshSerialize, BorshDeserialize, Clone)]
+pub struct PartialMessageSign {
+    pub msg_hash: [u8; 64],
+    pub signers: Vec<Signer>,
+}
+
+#[derive(Debug, BorshSerialize, BorshDeserialize, Clone)]
+pub struct ReceivePartialSignatureReq {
+    pub msg_hash: [u8; 64],
+    pub partial_sign: PartialThresholdSignature,
+}
+
+#[derive(Debug, BorshSerialize, BorshDeserialize)]
+pub struct VerifyThresholdSignatureReq {
+    pub msg_hash: [u8; 64],
+    pub threshold_sign: ThresholdSignature,
+}
+
+#[derive(Debug, BorshSerialize, BorshDeserialize)]
+pub struct FilterAndPublishParticipant {
+    pub total_peer_list: Vec<String>,
+    pub col_participant: Participant,
+}
+
+
+pub struct TSSCliParams {
+    pub total_nodes: u8,
+    pub threshold: u8,
+}
+
+#[derive(Debug, Eq, PartialEq, PartialOrd, Clone)]
+pub enum TSSLocalStateType {
+    NotParticipating,
+    Empty,
+    ReceivedPeers,
+    ReceivedParams,
+    DkgGeneratedR1,
+    DkgGeneratedR2,
+    StateFinished,
+    CommitmentsReceived,
+}
+
+// #[derive(Debug)]
 pub struct TSSLocalStateData {
     pub is_node_collector: bool,
     pub is_node_aggregator: bool,
@@ -37,7 +84,6 @@ pub struct TSSLocalStateData {
     pub others_partial_signature: HashMap<[u8; 64], Vec<PartialThresholdSignature>>,
     pub msg_pool: HashMap<[u8; 64], Vec<u8>>,
     pub msgs_signature_pending: HashMap<[u8; 64], Vec<Signer>>,
-    pub current_signers: Vec<Signer>,
 }
 
 impl fmt::Debug for TSSLocalStateData {
@@ -70,7 +116,7 @@ impl TSSLocalStateData {
         TSSLocalStateData {
             is_node_collector: false,
             is_node_aggregator: false,
-            context: *b"TANGO-EVENTS-DATA-SIGNING",
+            context: *b"TANGOS-EVENT-DATA-SIGNING",
             tss_process_state: TSSLocalStateType::Empty,
             tss_params: Parameters {
                 n: DEFUALT_TSS_TOTAL_NODES,
@@ -93,7 +139,6 @@ impl TSSLocalStateData {
             others_partial_signature: HashMap::new(),
             msg_pool: HashMap::new(),
             msgs_signature_pending: HashMap::new(),
-            current_signers: vec![],
         }
     }
 
@@ -101,6 +146,10 @@ impl TSSLocalStateData {
         self.is_node_collector = false;
         self.is_node_aggregator = false;
         self.tss_process_state = TSSLocalStateType::Empty;
+        self.tss_params = Parameters {
+            n: DEFUALT_TSS_TOTAL_NODES,
+            t: DEFUALT_TSS_THRESHOLD,
+        };
         self.others_peer_id = vec![];
         self.local_index = None;
         self.local_participant = None;
@@ -115,6 +164,5 @@ impl TSSLocalStateData {
         self.others_partial_signature = HashMap::new();
         self.msg_pool = HashMap::new();
         self.msgs_signature_pending = HashMap::new();
-        self.current_signers = vec![];
     }
 }

@@ -21,7 +21,7 @@ use message::gossip_message_handler::MessageHandler;
 use std::error::Error;
 use tokio::sync::mpsc::Receiver;
 
-/// Runs a new instance of tesseract node
+/// Runs a new instance of tango node
 /// topic: context on which you want to publish events to other nodes
 /// recv: mpsc receiver to tell node to publish events
 /// handler: external struct which implements MessageHandler to handle message

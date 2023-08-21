@@ -1,5 +1,5 @@
 # Network (In Progress)
-P2P connection between tesseract nodes, based on libp2p package.
+P2P connection between tango nodes, based on libp2p package.
 
 ## Testing network communication
 Make sure you are in network directory `cd network`<br />
@@ -10,7 +10,7 @@ Or you can run tests one by one using following commands<br />
 `cargo test -- tests::communication_with_mdns --exact --nocapture` <br />
 
 ## Running a node
-Make sure you are in Tesseract folder.<br />
+Make sure you are in tango folder.<br />
 
 Running a node with default properties use:<br />
 `cargo run`<br />
@@ -31,7 +31,7 @@ To start multiple nodes on same computer run `cargo run -- --new-node=true` comm
 go to<br />
 
 ```
-tesseract
+tango
 |__src
 |____main.rs <-
 ```

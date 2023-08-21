@@ -7,9 +7,7 @@ use frost_dalek::{
     DistributedKeyGeneration, Parameters, Participant,
 };
 
-use crate::tss_event_model::{
-    PublishPeerIDCall, ReceiveParamsWithPeerCall, ResetTSSCall, TSSData, TSSEventType,
-};
+use crate::tss_event_model::{PublishPeerIDCall, TSSData, TSSEventType, ReceiveParamsWithPeerCall, ResetTSSCall};
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -101,7 +99,7 @@ pub fn get_receive_params_msg(local_peer: String, params: Parameters) -> Result<
         let data = ReceiveParamsWithPeerCall {
             peer_id: local_peer,
             random: since_the_epoch.as_millis().to_string(),
-            params,
+            params
         };
 
         match data.try_to_vec() {

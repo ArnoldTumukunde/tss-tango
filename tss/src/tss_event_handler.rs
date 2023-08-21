@@ -4,7 +4,6 @@ use crate::{
 };
 
 impl TssService {
-    //distributes the msg to the appropriate handler
     pub async fn handle_tss_events(self: &mut Self, tss_gossiped_data: TSSData) {
         match tss_gossiped_data.tss_event_type {
             //nodes will be receiving this event to make participant using params
@@ -17,11 +16,11 @@ impl TssService {
                 self.handler_receive_peer_id_for_index(&tss_gossiped_data.tss_data)
                     .await;
             }
-            //nodes receives peers with collector participants
             TSSEventType::ReceivePeersWithColParticipant => {
                 self.handler_receiver_peers_with_col_participant(&tss_gossiped_data.tss_data)
                     .await;
-            }
+
+            },
             //nodes will receive participant and will add will go to round one state
             TSSEventType::ReceiveParticipant => {
                 self.handler_receive_participant(&tss_gossiped_data.tss_data)

@@ -1,8 +1,9 @@
-use crate::tss_event_model::{PartialMessageSign, TSSLocalStateType};
-use crate::utils::{get_receive_params_msg, get_reset_tss_msg, make_gossip_tss_data};
+use crate::local_state_struct::PartialMessageSign;
+use crate::utils::{get_receive_params_msg, make_gossip_tss_data, get_reset_tss_msg};
 use crate::DEFUALT_TSS_TOTAL_NODES;
 use crate::{
-    local_state_struct::TSSLocalStateData,
+    local_state_struct::{TSSLocalStateData, TSSLocalStateType},
+    // tss_event_handler::handle_tss_events,
     tss_event_model::{TSSData, TSSEventType},
 };
 use accounts::Account;
@@ -10,15 +11,15 @@ use borsh::BorshSerialize;
 use frost_dalek::signature::Signer;
 
 use frost_dalek::{compute_message_hash, Parameters, SignatureAggregator};
+use keystore::commands::KeyTypeId;
 use sp_keystore::SyncCryptoStore;
 use std::sync::Arc;
 use tango_database::MongoRepo;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::time;
-use sp_core::crypto::KeyTypeId;
 
 pub const MIN_THRESHOLD_PERCENTAGE: u32 = 75;
-pub const COLLECTOR_ADDR: &str = "";
+pub const COLLECTOR_ADDR: Option<String> = None;
 
 pub struct TssService {
     pub gossip_to_tss_receiver: Receiver<TSSData>,
@@ -43,9 +44,10 @@ impl TssService {
         key_type: Option<KeyTypeId>,
         keystore_option: Option<Arc<dyn SyncCryptoStore>>,
     ) -> Self {
+        // let arced_tss_state_data = Arc::new(Mutex::new(TSSLocalStateData::new()));
         let mut unlocked_state = TSSLocalStateData::new();
-        if !COLLECTOR_ADDR.is_empty() {
-            if COLLECTOR_ADDR.eq(&peer_id) {
+        if let Some(c_addr) = COLLECTOR_ADDR {
+            if c_addr.eq(&peer_id) {
                 unlocked_state.is_node_collector = true;
             } else {
                 unlocked_state.is_node_collector = false;
@@ -88,10 +90,9 @@ impl TssService {
                 r = self.gossip_to_tss_receiver.recv() => {
                     if let Some(data) = r{
                         log::info!("=====================");
-                        log::info!("received tss gossip from peer: {:?} for {:?}", data.peer_id, data.tss_event_type);
+                        log::info!("received tss event from gossip: {:?}", data);
                         log::info!("=====================");
                         self.handle_tss_events(data).await;
-
                     }
                 }
 
@@ -113,8 +114,6 @@ impl TssService {
                             if let Some(pending_msg_req) = self.tss_local_state.msgs_signature_pending.get(&msg_hash){
                                 self.process_pending_msg_req(msg_hash.clone(), pending_msg_req.to_vec()).await;
                                 self.tss_local_state.msgs_signature_pending.remove(&msg_hash);
-                            }else{
-                                log::info!("msg not pending request for data {:?} and hash {:?}", data, msg_hash);
                             }
 
                         }else{
@@ -140,23 +139,12 @@ impl TssService {
                                 );
                             }
 
-                            //including aggregator as a signer
-                            aggregator.include_signer(
-                                self.tss_local_state.local_index.clone().unwrap(),
-                                self.tss_local_state.local_commitment_share.clone().unwrap().0.commitments[0],
-                                self.tss_local_state.local_public_key.clone().unwrap(),
-                            );
-
                             //this signers list will be used by other nodes to verify themselves.
                             let signers = aggregator.get_signers();
-                            self.tss_local_state.current_signers = signers.clone();
-
-                            // //sign msg from aggregator side
-                            self.aggregator_event_sign(msg_hash.clone());
 
                             let sign_msg_req = PartialMessageSign{
-                                msg_hash,
-                                signers: signers.clone(),
+                                msg_hash: msg_hash.clone(),
+                                signers: signers.clone()
                             };
 
                             self.publish_to_network(local_peer_id.clone(),
@@ -177,8 +165,6 @@ impl TssService {
                         if self.tss_local_state.is_node_collector && self.tss_local_state.tss_process_state <= TSSLocalStateType::ReceivedPeers{
 
                             //sending reset state request to all nodes since didn't received good amount of nodes.
-                            self.tss_local_state.reset();
-                            self.tss_local_state.is_node_collector = true;
                             if let Ok(reset_call) = get_reset_tss_msg("Reinit state".into()){
                                 if let Ok(reset_data) = make_gossip_tss_data(local_peer_id.clone(), reset_call, TSSEventType::ResetTSSState){
                                     if let Err(e) = self.tss_to_gossip_sender.send(reset_data).await{
