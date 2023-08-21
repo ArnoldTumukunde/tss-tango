@@ -8,7 +8,7 @@ use sp_keystore::SyncCryptoStore;
 use std::collections::HashMap;
 use std::error::Error;
 use std::{convert::TryFrom, sync::Arc};
-use tango_database::models::{EventsModel};
+use tango_database::models::EventsModel;
 use tango_database::MongoRepo;
 
 pub async fn sign_data(
@@ -88,7 +88,7 @@ pub async fn store_data(
 ) -> Result<(), Box<dyn Error>> {
     //store event data in db
     let data = serde_json::to_value(data).unwrap();
-    let _connector_json = match tango_database::MongoRepo::insert_event(
+    let _connector_json = match MongoRepo::insert_event(
         &connector,
         EventsModel { id: None, data },
     )
@@ -147,7 +147,7 @@ mod tests {
             }
             _ => unreachable!("keystore_config always returns path and password; qed"),
         };
-        let key_type_str = "anlg";
+        let key_type_str = "tngo";
         let key_type = KeyTypeId::try_from(key_type_str).unwrap();
 
         let acc = match Account::new("tango", key_type, keystore.clone()){
