@@ -51,9 +51,10 @@ development plan:
 
 * Make sure you have hardhat setup
 
-Try running some of the following tasks:
+Run the following tasks:
 
 ```shell
+cd contracts
 npx hardhat node
 npx hardhat compile
 npx hardhat run scripts/deploy.ts --network localhost
