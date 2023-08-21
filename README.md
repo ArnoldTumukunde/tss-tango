@@ -1,14 +1,18 @@
 # tss-tango
+
 A app that utilizes frost-dalek to verify messages sent between siloed networks
 
 ## Building
+
 To run this build make sure you have protobuff installed.
-For mac use: <br />
+For mac use:
+
 ```Bash
 brew install protobuf
 ```
 
-For linux use: <br />
+For linux use:
+
 ```Bash
 sudo apt-get install protobuf-compiler
 ```
@@ -17,7 +21,8 @@ sudo apt-get install protobuf-compiler
 
 Warning this program can kill all your tmux sessions
 
-### Requirements:
+### Requirements ':'
+
 * Make sure you have mongodb running with a database called `tango_db` and a collection called `events`
 * Make sure you have [tmux](https://github.com/tmux/tmux/wiki/Installing) installed on your system for more info read scripts/tmux/readme.md
 
@@ -34,12 +39,13 @@ cargo run --example tss_bench_n3t2_1000
 ```
 
 ### phase one
-development plan:
-- [] connector can get events, stored in db with single signature. test passed with local ethereum
-- [] tss works, tango node can exchange key and sign event
-- [] mutliple signature with event. test passed with ethereum test net
-- [] ci works, integration test automatically run. node number and threshold configurable (3 nodes to 10 nodes)
 
+development plan:
+
+* [x] connector can get events, stored in db with single signature. test passed with local ethereum
+* [x] tss works, tango node can exchange key and sign event
+* [x] mutliple signature with event. test passed with ethereum test net
+* [x] ci works, integration test automatically run. node number and threshold configurable (3 nodes to 10 nodes)
 
 ## How to run the nodes
 
