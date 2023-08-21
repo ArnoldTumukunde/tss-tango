@@ -714,7 +714,6 @@ impl TssService {
                                 msg,
                                 keytype,
                                 self.tss_local_state.keystore.clone().unwrap(),
-                                //self.timechain_client.clone(),
                             )
                             .await
                             {

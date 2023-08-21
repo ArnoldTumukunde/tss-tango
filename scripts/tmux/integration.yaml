@@ -1,0 +1,20 @@
+session_name: integration
+windows:
+  - windows-name: dev
+    layout: tiled
+    shell_command_before:
+      - cd ../../
+      - bash
+    panes:
+      - shell_command:
+        - cd contracts
+        - npx hardhat node
+      - shell_command:
+        - sleep 6
+        - target/release/tango-node
+      - shell_command:
+        - sleep 5
+        - echo -n "2" > blockdata.db
+        - cd contracts
+        - npx hardhat run scripts/deploy.ts --network localhost
+        - npx hardhat run scripts/transfer_local.ts --network localhost

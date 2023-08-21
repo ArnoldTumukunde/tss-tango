@@ -46,7 +46,7 @@ impl SwapToken {
 
     pub async fn swap_handler_old(&self, swap: TokenSwap) -> Result<(), Box<dyn Error>> {
         let websocket = web3::Web3::new(
-            Http::new("https://a507940678ae4740a727967aa8566e08.eth.rpc.rivet.cloud").unwrap(),
+            Http::new("https://goerli.rpc.rivet.cloud/a507940678ae4740a727967aa8566e08").unwrap(),
         );
         let unit_from: u64 = i64::pow(
             10,

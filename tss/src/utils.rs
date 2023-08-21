@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+
 use borsh::BorshSerialize;
 use events::events::{Event, EventType};
 use frost_dalek::{

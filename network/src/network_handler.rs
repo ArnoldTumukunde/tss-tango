@@ -21,7 +21,7 @@ use message::gossip_message_handler::MessageHandler;
 use std::error::Error;
 use tokio::sync::mpsc::Receiver;
 
-/// Runs a new instance of tango node
+/// Runs a new instance of tesseract node
 /// topic: context on which you want to publish events to other nodes
 /// recv: mpsc receiver to tell node to publish events
 /// handler: external struct which implements MessageHandler to handle message
@@ -42,7 +42,7 @@ pub async fn run(
         listening_port.parse::<i32>().unwrap() <= 65535,
         "Invalid port provided"
     );
-    let mut is_bootstrapped = false;
+
     //node keypair
     let peer_id = node_identity.0;
     let id_keys = node_identity.1;
@@ -58,6 +58,7 @@ pub async fn run(
             kademlia: build_kademlia(peer_id.clone()),
             identify: build_identify(id_keys.public().clone()),
             ping: build_ping(),
+            is_bootstrapped: false,
         };
 
         //composing transport, protocol and peer id into swam manager and running in tokio env
@@ -135,7 +136,7 @@ pub async fn run(
     if let Err(e) = swarm.behaviour_mut().kademlia.bootstrap() {
         log::warn!("Failed to bootstrap node with error {}", e);
     } else {
-        is_bootstrapped = true;
+        swarm.behaviour_mut().is_bootstrapped = true;
         log::info!("Bootstrap Done");
     }
 
@@ -185,9 +186,9 @@ pub async fn run(
                             log::info!("MDNS: inserted node into kademlia: {}", peer_id);
 
                             //bootstrapping if not already done
-                            if !is_bootstrapped {
+                            if !swarm.behaviour().is_bootstrapped {
                                 if swarm.behaviour_mut().kademlia.bootstrap().is_ok(){
-                                    is_bootstrapped = true;
+                                    swarm.behaviour_mut().is_bootstrapped = true;
                                     log::info!("MDNS: Kademlia bootstrapped successfully");
                                 }
                             }
@@ -242,7 +243,7 @@ pub async fn run(
 
 pub fn kad_event_handler(event: KademliaEvent, swarm: &mut Swarm<LocalNetworkBehaviour>) {
     match event {
-        KademliaEvent::OutboundQueryProgressed { result, .. } => match result {
+        KademliaEvent::OutboundQueryCompleted { result, .. } => match result {
             QueryResult::GetProviders(Ok(_ok)) => {
                 log::info!("Kademlia: GetProviders successful");
             }

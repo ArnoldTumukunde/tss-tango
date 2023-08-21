@@ -10,12 +10,12 @@ use borsh::BorshSerialize;
 use frost_dalek::signature::Signer;
 
 use frost_dalek::{compute_message_hash, Parameters, SignatureAggregator};
-use keystore::commands::KeyTypeId;
 use sp_keystore::SyncCryptoStore;
 use std::sync::Arc;
 use tango_database::MongoRepo;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::time;
+use sp_core::crypto::KeyTypeId;
 
 pub const MIN_THRESHOLD_PERCENTAGE: u32 = 75;
 pub const COLLECTOR_ADDR: &str = "";

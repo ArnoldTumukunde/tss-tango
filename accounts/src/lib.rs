@@ -6,7 +6,7 @@ use std::io::{Read, Write};
 use std::str;
 use std::sync::Arc;
 
-const PATH: &str = "../artifacts/test-account.json";
+const PATH: &str = "./artifacts/account.json";
 
 #[derive(Clone)]
 pub struct Account {

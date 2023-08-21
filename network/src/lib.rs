@@ -10,7 +10,7 @@ pub mod utils;
 /// we can read below line as we have an ipv4 as 100.24.209.156 who is listening on 52200 tcp port
 /// for p2p connection having its peer id as 12D3KooWFEXXy8iJfWk3ZG5883GiebFpg1QbNCivXKSE5VZ9YkHF.
 pub fn get_bootnodes() -> Vec<Multiaddr> {
-    ["/ip4/100.24.209.156/tcp/52200/p2p/12D3KooWFEXXy8iJfWk3ZG5883GiebFpg1QbNCivXKSE5VZ9YkHF"]
+    ["/ip4/127.0.0.1/tcp/52200/p2p/12D3KooWFEXXy8iJfWk3ZG5883GiebFpg1QbNCivXKSE5VZ9YkHF"]
         .iter()
         .filter_map(|s| Multiaddr::from_str(s).ok())
         .collect::<Vec<_>>()

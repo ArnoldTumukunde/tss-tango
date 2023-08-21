@@ -27,7 +27,7 @@ connector = { path = "./connector/", package = "tango-connector"}
 accounts = { path = "./accounts/", package = "tango-accounts"}
 tss = { path = "./tss/", package = "tango-tss"}
 clap = { version = "3.1.9", features = ["derive"] }
-libp2p = "0.50.1"
+libp2p = "0.44.0"
 futures = "0.3.21"
 log = "0.4.0"
 env_logger = "0.10.0"

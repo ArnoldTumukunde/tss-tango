@@ -1,0 +1,16 @@
+session_name: tss
+options:
+  default-size: 800x600
+windows:
+  - windows-name: dev
+    layout: tiled
+    shell_command_before:
+      - cd ../../
+      - bash
+    panes:
+      - shell_command:
+        - target/release/examples/tss_bench_run
+      - shell_command:
+        - target/release/examples/tss_bench_run --new-node=true
+      - shell_command:
+        - target/release/examples/tss_bench_run --new-node=true

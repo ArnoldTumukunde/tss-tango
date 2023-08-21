@@ -2,9 +2,9 @@ use libp2p::{
     gossipsub::{Gossipsub, GossipsubEvent},
     identify::{Identify, IdentifyEvent},
     kad::{store::MemoryStore, Kademlia, KademliaEvent},
-    mdns::{self, MdnsEvent},
+    mdns::{Mdns, MdnsEvent},
     ping::{Ping, PingEvent},
-    swarm::NetworkBehaviour,
+    NetworkBehaviour,
 };
 
 #[derive(Debug)]
@@ -22,10 +22,12 @@ pub enum ComposedEvent {
 #[behaviour(out_event = "ComposedEvent")]
 pub struct LocalNetworkBehaviour {
     pub gossipsub: Gossipsub,
-    pub mdns: mdns::tokio::Behaviour,
+    pub mdns: Mdns,
     pub kademlia: Kademlia<MemoryStore>,
     pub identify: Identify,
     pub ping: Ping,
+    #[behaviour(ignore)]
+    pub is_bootstrapped: bool,
 }
 
 impl From<GossipsubEvent> for ComposedEvent {

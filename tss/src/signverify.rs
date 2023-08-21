@@ -1,13 +1,14 @@
 use accounts::Account;
-use keystore::commands::KeyTypeId;
 use sc_cli::Error;
 use serde_json::Value;
+use sp_core::crypto::KeyTypeId;
 use sp_core::sr25519::Signature;
 use sp_core::{Pair, Public};
 use sp_keystore::SyncCryptoStore;
 use std::collections::HashMap;
 use std::{convert::TryFrom, sync::Arc};
-use tango_database::{models::EventsModel, MongoRepo};
+use tango_database::models::EventsModel;
+use tango_database::MongoRepo;
 
 pub async fn sign_data(
     acc: Account,
@@ -68,13 +69,14 @@ pub async fn sign_data(
     data.insert("signature".to_string(), sig_value);
     data.insert("signer".to_string(), pubkey_value);
 
-    match store_data(data.clone(), connector).await {
+
+    match store_data(data, connector).await {
         Ok(s) => s,
         Err(e) => {
             log::error!("Error storing data value: {:?}", e);
             return Err(e.into());
         }
-    };
+    }
     Ok(signature)
 }
 
@@ -84,10 +86,11 @@ pub async fn store_data(
 ) -> Result<(), Box<dyn std::error::Error>> {
     //store event data in db
     let data = serde_json::to_value(data).unwrap();
-    let _ = tokio::spawn(async move {
-        if let Err(_) =      
-            tango_database::MongoRepo::insert_event(&connector, EventsModel { id: None, data }).await
-        {
+        let _ = tokio::spawn(async move{
+        if let Err(_) = tango_database::MongoRepo::insert_event(
+            &connector,
+            EventsModel { id: None, data },
+        ).await {
             log::error!("Error storing data");
         }
     });
@@ -112,7 +115,6 @@ pub async fn verify_data(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use keystore::commands::KeyTypeId;
     use keystore::params::keystore_params::KeystoreParams;
     use sc_keystore::LocalKeystore;
     use sc_service::config::KeystoreConfig;
@@ -122,6 +124,10 @@ mod tests {
     async fn get_connection(db_url: String) -> MongoRepo {
         let mut collections = Vec::new();
         collections.push("events");
+        collections.push("contracts");
+        collections.push("token_swap");
+        collections.push("swap_events");
+        collections.push("tokens");
         let connector = MongoRepo::init(&db_url, "tango_db", collections).await;
 
         connector
@@ -130,6 +136,7 @@ mod tests {
     #[tokio::test]
     async fn test_sign_event_data() {
         let keystore_params = KeystoreParams::default();
+
         let config_dir = env::current_dir().unwrap();
         let keystore = match keystore_params.keystore_config(&config_dir).unwrap() {
             (_, KeystoreConfig::Path { path, password }) => {
@@ -141,7 +148,12 @@ mod tests {
         };
         let key_type_str = "tngo";
         let key_type = KeyTypeId::try_from(key_type_str).unwrap();
-        let acc = Account::new("tango", key_type, keystore.clone());
+
+        let acc = match Account::new("tango", key_type, keystore.clone()){
+            Ok(acc) => acc,
+            Err(e) => panic!("Error creating account: {:?}", e),
+        };
+
         let connector = get_connection("mongodb://localhost:27017".to_string()).await;
         let msg = r#"{"address":"0x0000000000000000000000000000000000000000","topics":["0x0000000000000000000000000000000000000000000000000000000000000000"],"data":"0x0000000000000000000000000000000000000000000000000000000000000000","block_hash":null,"block_number":null,"transaction_hash":null,"transaction_index":null,"log_index":null,"transaction_log_index":null,"log_type":null,"removed":null}"#;
         let sig = sign_data(acc.clone(), connector, msg.to_string(), key_type, keystore)

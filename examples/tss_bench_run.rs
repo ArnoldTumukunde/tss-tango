@@ -1,48 +1,32 @@
 use accounts::Account;
 use clap::Parser;
-use connector::ethereum::SwapToken;
-use connector::polkadot;
+use std::time::Instant;
+use std::{sync::Arc, time::Duration};
+
 use env_logger::Env;
+use keystore::{commands::KeyTypeId, params::keystore_params::KeystoreParams};
 use libp2p::gossipsub::Topic;
 use network::network_handler;
 use network::utils::identity_handler::get_node_identity;
-use std::{sync::Arc, time::Duration};
-// use sc_cli::KeystoreParams;
-use keystore::params::keystore_params::KeystoreParams;
 use sc_keystore::LocalKeystore;
 use sc_service::config::KeystoreConfig;
-use sp_core::crypto::KeyTypeId;
 use sp_keystore::SyncCryptoStorePtr;
-use std::convert::TryFrom;
 use std::env;
-use tango_database::MongoRepo;
 use tango_node::cli::Args;
 use tokio;
 use tokio::sync::{mpsc, Mutex};
 use tss::tss_event_model::TSSData;
 use tss::tss_service::TssService;
-use web3::transports::Http;
-#[derive(Debug)]
-pub struct BLOCKCHAIN {
-    pub polkadot: String,
-    pub ethereum: String,
-}
-impl BLOCKCHAIN {
-    fn new(polka: &str, eth: &str) -> Self {
-        BLOCKCHAIN {
-            ethereum: String::from(eth),
-            polkadot: String::from(polka),
-        }
-    }
-}
+
+use tango_database::MongoRepo;
+
 async fn get_connection(db_url: String) -> MongoRepo {
     let mut collections = Vec::new();
     collections.push("events");
     collections.push("contracts");
     collections.push("token_swap");
     collections.push("swap_events");
-    collections.push("tokens");
-    let connector = MongoRepo::init(&db_url, "analog_db", collections).await;
+    let connector = MongoRepo::init(&db_url, "tango_db", collections).await;
 
     connector
 }
@@ -53,7 +37,7 @@ async fn main() {
     // log
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
     let config_dir = env::current_dir().unwrap();
-    log::info!("Tesseract node start up ");
+    log::info!("Tango node start up ");
 
     //Declare channels and variables
     //Channels
@@ -62,8 +46,8 @@ async fn main() {
     let tss_to_gossip_sender = gossip_sender.clone();
 
     let (message_handler_to_tss_sender, message_handler_to_tss_receiver) =
-        mpsc::channel::<TSSData>(100);
-    let (event_sender, event_receiver) = mpsc::channel::<String>(1000);
+        mpsc::channel::<TSSData>(1000);
+    let (event_sender, event_receiver) = mpsc::channel::<String>(100);
 
     //Keystore
     let keystore_params = KeystoreParams::default();
@@ -104,7 +88,10 @@ async fn main() {
     // create account
     let acc = match Account::new(&args.password.clone(), key_type, key_store){
         Ok(acc) => acc,
-        Err(e) => panic!("Error creating account: {:?}", e),
+        Err(e) => {
+            eprintln!("Error creating account: {:?}", e);
+            return;
+        }
     };
 
     // start the db instance
@@ -126,69 +113,34 @@ async fn main() {
         .await
         .unwrap()
     });
-    let selected_chain = BLOCKCHAIN::new("polkadot", "ethereum");
-    let blockchain = args.blockchain.clone();
 
     // start connector
     let conn_db_url = args.db_url.clone();
     //tss should take the event_receiver
     let connector = get_connection(conn_db_url.clone()).await;
-    // get polkadot on-chain accounts data.
-    if blockchain == selected_chain.polkadot {
-        log::info!("Polkadot chain connected.");
-        let polkadot_event_sender = event_sender.clone();
-        tokio::spawn(async move {
-            tokio::time::sleep(Duration::from_secs(10)).await;
-            let arguments = polkadot::Polkadot {
-                sender: polkadot_event_sender,
-            };
+    log::info!("Data fetched successfully from the contract database.",);
 
-            let _ = polkadot::Polkadot::get_accounts(&arguments).await;
-        });
-    } else if blockchain == selected_chain.ethereum {
-        log::info!("Etherum chain connected.");
-        // let connector_json = MongoRepo::get_contract_json(&connector).await.unwrap();
-        log::info!("Data fetched successfully from the contract database.",);
-        /////////////////////// event data fetch  removed
-        //
-        // Start the swap token data thread.
-        let connection = connector.clone();
-        let event_sender_cloned = event_sender.clone();
-        tokio::spawn(async move {
-            let mut swap_index = 0;
-            loop {
-                tokio::time::sleep(Duration::from_millis(10000)).await;
-                swap_index += 1;
-                let swap_data = MongoRepo::get_swap_data(&connection.clone()).await;
-                match swap_data {
-                    Ok(swap_data) => {
-                        if swap_data.len() > 0 {
-                            let end_point = Http::new(&swap_data[0].chain_endpoint);
-                            match end_point {
-                                Ok(end_point) => {
-                                    let websocket = web3::Web3::new(end_point);
-                                    let arguments = SwapToken {
-                                        web_socket: websocket,
-                                        connection: connection.clone(),
-                                        sender: event_sender_cloned.clone(),
-                                    };
-                                    let _ = SwapToken::swap_thread_handler(&arguments, swap_index)
-                                        .await;
-                                }
-                                Err(msg) => {
-                                    println!("Endpoint not valid {}", msg);
-                                }
-                            }
-                        }
-                    }
-                    Err(msg) => {
-                        println!("Database connection Error {}", msg);
-                    }
-                }
+    // just for testing purpose will be removed later
+    let temp_sender = event_sender.clone();
+    tokio::spawn(async move {
+        tokio::time::sleep(Duration::from_secs(10)).await;
+        let start = Instant::now();
+        for i in 0..1000 {
+            let msg = format!(
+                r#"{{"address":"0x0000000000000000000000000000000000000000","topics":["0x0000000000000000000000000000000000000000000000000000000000000000"],"data":"0x0000000000000000000000000000000000000000000000000000000000000000","block_hash":null,"block_number":null,"transaction_hash":null,"transaction_index":null,"log_index":null,"transaction_log_index":null,"log_type":null,"removed":null, "num":{}}}"#,
+                i
+            );
+            if let Err(e) = temp_sender.send(msg).await {
+                log::error!("=====================");
+                log::error!("Error sending event to event receiver: {:?}", e);
+                log::error!("=====================");
             }
-        });
-        ///////////////////////
-    }
+        }
+        let duration = start.elapsed();
+        println!("======================================");
+        println!("Time elapsed in sending events is: {:?}", duration);
+        println!("======================================");
+    });
 
     //Network creating or getting identity
     let (peer_id, id_keys) = get_node_identity(args.new_node);
