@@ -23,9 +23,9 @@ impl Polkadot {
 
         let address = substrate::storage().system().account_iter();
 
-        let mut iter =  api.storage().at_latest().await?.iter(address, 10).await?;
+        let mut iter =  api.storage().at_latest().await?.iter(address).await?;
 
-        while let Some((key, account)) = iter.next().await? {
+        while let Some(Ok((key, account))) = iter.next().await {
             log::info!("{}: {}", hex::encode(key.clone()), account.data.free);
 
             let json_data = json!({
