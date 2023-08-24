@@ -1,6 +1,6 @@
 use clap::Parser;
 
-/// Tessaract Node
+/// Tango Node
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 pub struct Args {
@@ -29,7 +29,7 @@ pub struct Args {
     pub db_url: String,
 
     //account password
-    #[clap(short = 'P', long, default_value = "accountpassword")]
+    #[clap(short = 'P', long, default_value = "tango1234")]
     pub password: String,
 
     // total number of tss participants
