@@ -2,7 +2,7 @@ use serde_json::json;
 use subxt::{OnlineClient, PolkadotConfig};
 use tokio::sync::mpsc;
 
-#[subxt::subxt(runtime_metadata_path = "../artifacts/metadata.scale")]
+#[subxt::subxt(runtime_metadata_path = "metadata.scale")]
 pub mod substrate {}
 
 #[derive(Clone)]
